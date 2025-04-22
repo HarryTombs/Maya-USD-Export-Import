@@ -1,0 +1,18 @@
+#usda 1.0
+
+def Xform "pCube1"
+{
+    float3 xformOp:rotateXYZ = (0, 0, 0)
+    float3 xformOp:scale = (1, 1, 1)
+    double3 xformOp:translate = (0, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+}
+
+def Xform "camera1"
+{
+    float3 xformOp:rotateXYZ = (-30.701374, -24.94358, 14.058675)
+    float3 xformOp:scale = (1, 1, 1)
+    double3 xformOp:translate = (-2.1397514642392967, 1.7680187789874895, 3.518866577350429)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+}
+
