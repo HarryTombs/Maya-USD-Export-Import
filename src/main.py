@@ -1,10 +1,15 @@
 import os
 import maya.cmds as cmds
-from pxr import Usd, UsdGeom, Gf
+from pxr import Usd, UsdGeom, Gf, UsdLux
 
-useSelected = False
-stage = CreateUSDA()
-print(cmds.ls(st=True))
+useSelected = True
+
+## FIX THE SET ISSUE, you can't rewrite over with sets
+## for each type: mesh, cam, light, etc make an array of details
+## the using the list relatives do the shape. something something
+## for each attrib in attributes[] shape.attrib
+## so would be end up with shape.horizontalaperture and bing bang boom
+## then you've got a vairable that can be check in a for loop with checkXform()
 
 def SeelctAll():
     selectedName = cmds.ls(tr=True, lt=True, l=True)
@@ -21,7 +26,6 @@ def SeelctAll():
 
 def SelectCurrent():
     selectedName = cmds.ls(l=True, sl=True)
-    print(selectedName)
     if not selectedName:
         print("Selection is empty")
     return selectedName
@@ -34,21 +38,21 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-
-    usd_output_path = os.path.join(sceneDir, "my_export2.usda")
-    if os.path.isfile(usd_output_path) == True:
-        stage = Usd.Stage.Open(usd_output_path)
-        print(f"USD file found at: {usd_output_path}")
+    usdOutputPath = os.path.join(sceneDir, "my_export7.usda")
+    if os.path.isfile(usdOutputPath) == True:
+        stage = Usd.Stage.Open(usdOutputPath)
+        print(f"USD file found at: {usdOutputPath}")
     else:
-        stage = Usd.Stage.CreateNew(usd_output_path)
-        print(f"USD file created at: {usd_output_path}")
+        stage = Usd.Stage.CreateNew(usdOutputPath)
+        print(f"USD file created at: {usdOutputPath}")
     return stage 
     
-def checkXform(xform, transType):
+def checkXform(xform, transType,input):
     for op in xform.GetOrderedXformOps():
         if op.GetOpType() == transType:
-            return op    
+            return op
     return xform.AddXformOp(transType)
+
         
 def writeXform(obj,stage):
     xform = UsdGeom.Xform.Define(stage, f"/{obj.strip('|').replace('|', '/')}")
@@ -56,9 +60,14 @@ def writeXform(obj,stage):
     pos = cmds.xform(obj, query=True, ws=True, t=True)
     rot = cmds.xform(obj, query=True, ws=True, ro=True)
     
-    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
-    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
+    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate,pos)
+    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ,rot)
+    t_xform.Set(Gf.Vec3f(pos[0],pos[1],pos[2]))
+    r_xform.Set(Gf.Vec3f(rot[0],rot[1],rot[2]))
 
+
+    
+stage = CreateUSDA()
 
 
 if useSelected == True:
@@ -69,8 +78,14 @@ if useSelected == False:
    
 
 for obj in objList:
-    print(cmds.objectType(obj,tt=True))
-    #writeXform(obj,stage)
+    if cmds.listRelatives(obj, s=True, typ="mesh"):
+        print("mesh")
+        writeXform(obj,stage)
+        #writeMesh(obj,stage)
+    elif cmds.listRelatives(obj, s=True, typ="camera"):  
+        print("Camera")  
+        #writeCam(obj,stage)
+   # writeXform(obj,stage)
         
 stage.GetRootLayer().Save()
     
