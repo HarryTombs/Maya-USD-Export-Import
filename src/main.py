@@ -4,12 +4,6 @@ from pxr import Usd, UsdGeom, Gf, UsdLux
 
 useSelected = True
 
-## FIX THE SET ISSUE, you can't rewrite over with sets
-## for each type: mesh, cam, light, etc make an array of details
-## the using the list relatives do the shape. something something
-## for each attrib in attributes[] shape.attrib
-## so would be end up with shape.horizontalaperture and bing bang boom
-## then you've got a vairable that can be check in a for loop with checkXform()
 
 def SeelctAll():
     selectedName = cmds.ls(tr=True, lt=True, l=True)
@@ -38,7 +32,7 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, "my_export7.usda")
+    usdOutputPath = os.path.join(sceneDir, "my_export1.usda")
     if os.path.isfile(usdOutputPath) == True:
         stage = Usd.Stage.Open(usdOutputPath)
         print(f"USD file found at: {usdOutputPath}")
@@ -65,6 +59,46 @@ def writeXform(obj,stage):
     t_xform.Set(Gf.Vec3f(pos[0],pos[1],pos[2]))
     r_xform.Set(Gf.Vec3f(rot[0],rot[1],rot[2]))
 
+def writeMesh(obj, stage):
+    
+    import maya.api.OpenMaya as om
+    
+    select = om.MSelectionList()
+    select.add(obj)
+    dagPath = select.getDagPath(0)
+    
+    meshFN = om.MFnMesh(dagPath)
+    
+  #  print(meshFN)
+    
+    usdPath = "/" + obj.replace("|","/").strip("/")
+    
+   # print(usdPath)
+    
+    usdMesh = UsdGeom.Mesh.Define(stage,usdPath)
+    
+   # print(usdMesh)
+    
+    
+    array = meshFN.getPoints(om.MSpace.kWorld)
+    
+    #print(array)
+    
+    points = []
+    
+    count = 0
+    
+    for pt in array:
+        count += 1
+        currentpoint = [*pt]
+        Vec3list = [Gf.Vec3f(currentpoint[:-1])]
+        points = points + Vec3list
+    usdMesh.GetPointsAttr().Set(points)
+    
+    counts, indices = meshFN.getVertices()
+    
+    usdMesh.GetFaceVertexCountsAttr().Set(counts)
+    usdMesh.GetFaceVertexIndicesAttr().Set(indices)
 
     
 stage = CreateUSDA()
@@ -81,7 +115,7 @@ for obj in objList:
     if cmds.listRelatives(obj, s=True, typ="mesh"):
         print("mesh")
         writeXform(obj,stage)
-        #writeMesh(obj,stage)
+        writeMesh(obj,stage)
     elif cmds.listRelatives(obj, s=True, typ="camera"):  
         print("Camera")  
         #writeCam(obj,stage)
