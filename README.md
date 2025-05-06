@@ -57,6 +57,37 @@ https://help.autodesk.com/view/MAYAUL/2024/ENU/?guid=__CommandsPython_index_html
 
 https://github.com/PixarAnimationStudios/OpenUSD?tab=readme-ov-file
 
+https://www.sidefx.com/docs/houdini/solaris/usd.html#:~:text=In%20USD%2C%20geometry%20settings%2C%20such,in%20an%20array%20of%20coordinates.
+
+https://docs.omniverse.nvidia.com/kit/docs/pxr-usd-api/105.0.2/pxr/UsdGeom.html
+
+https://docs.omniverse.nvidia.com/usd/latest/technical_reference/usd-types.html
+
+https://docs.omniverse.nvidia.com/kit/docs/usdrt/latest/_apidocs/classusdrt_1_1UsdSkelSkeleton.html#classusdrt_1_1usdskelskeleton_1a1f5ca4a07b3ae24048bf68c9059a1ff9
+
+
+
+https://openusd.org/dev/tut_xforms.html#id2
+
+https://dev.epicgames.com/documentation/en-us/unreal-engine/universal-scene-description-in-unreal-engine
+
+https://animationmethods.com/rigs.html
+
+https://animationmethods.com/rigs.html
+
+https://openusd.org/dev/api/_usd_skel__schema_overview.html
+
+https://openusd.org/dev/api/class_gf_matrix4d.html
+
+https://openusd.org/dev/api/_usd_skel__best_practices.html
+
+https://openusd.org/release/index.html
+
+https://openusd.org/release/tut_end_to_end.html#end-to-end-example
+
+https://help.autodesk.com/view/MAYAUL/2025/ENU/?guid=GUID-36808BCC-ACF9-4A9E-B0D8-B8F509FEC0D5
+
+
 
 
 
