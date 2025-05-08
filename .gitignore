@@ -1,3 +1,2 @@
-.usda
+*.usda
 .vscode/
-Tests/*
