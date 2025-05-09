@@ -22,9 +22,7 @@ import Export
 class TestExporter(unittest.TestCase):
 
     def setUp(self):
-        print("Saving")
-
-        
+        print("Saving")       
 
     def test_select_all_but_cameras(self):
         selected = Export.SelectAllButCameras()
