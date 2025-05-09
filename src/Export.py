@@ -7,10 +7,9 @@ useSelected = True
 startFrame = cmds.playbackOptions(q=True, min=True)
 endFrame = cmds.playbackOptions(q=True, max=True)
 frameTimeCode = 24.0
-print(frameTimeCode)
 
 
-def SeelctAllButCameras():
+def SelectAllButCameras():
     exclude = {"|front","|persp","|side","|top"}
     selected = cmds.ls(tr=True, lt=True, l=True)
     return [obj for obj in selected if obj not in exclude]
@@ -30,7 +29,7 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, "my_export.usda")
+    usdOutputPath = os.path.join(sceneDir, "my_export1.usda")
     if os.path.isfile(usdOutputPath) == True:
         stage = Usd.Stage.Open(usdOutputPath)
         print(f"USD file found at: {usdOutputPath}")

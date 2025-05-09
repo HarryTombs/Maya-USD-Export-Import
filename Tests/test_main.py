@@ -6,13 +6,15 @@ import maya.cmds as cmds
 
 import sys
 import os
-
-# Get the absolute path to the src directory
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 src_path = os.path.join(project_root, 'src')
 
-# Add src to the Python module search path
 sys.path.append(src_path)
+
+cmds.file(new=True, force=True)
+cmds.polyCube(name='testCube', sx=5, sy=5, sz=5)
+cmds.file(rn="test.ma")
+cmds.file(save=True, type="mayaAscii")
 
 import Export
 
@@ -20,12 +22,13 @@ import Export
 class TestExporter(unittest.TestCase):
 
     def setUp(self):
-        cmds.file(new=True, force=True)
-        cmds.polyCube(name='testCube', sx=5, sy=5, sz=5)
+        print("Saving")
+
+        
 
     def test_select_all_but_cameras(self):
         selected = Export.SelectAllButCameras()
-        self.assertEqual(selected, ['testCube'])
+        self.assertEqual(selected, ['|testCube'])
 
 if __name__ == '__main__':
     unittest.main()
