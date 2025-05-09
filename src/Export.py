@@ -188,6 +188,8 @@ def WriteRig(obj,stage):
             
 stage = CreateUSDA()
 
+print(stage)
+
 worldPrim = stage.DefinePrim("/World", "Xform")
 
 stage.SetStartTimeCode(int(startFrame))
