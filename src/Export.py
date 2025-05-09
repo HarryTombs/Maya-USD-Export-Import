@@ -109,8 +109,6 @@ def writeCam(obj, stage):
     usdCam.GetHorizontalApertureAttr().Set(horiAperture)
     usdCam.GetVerticalApertureAttr().Set(vertAperture)
     
-    #If frame number > 0 then it'll be animated
-    #I probably don't need to check for this
     
     
 def WriteRig(obj,stage):
@@ -159,14 +157,7 @@ def WriteRig(obj,stage):
             frameQuats.append(quat)
         allRotations.append(Vt.QuatfArray(frameQuats))
         
-    
-            
-        #for q in frameQuats:
-           # arrayss = [Gf.Quatf(q.GetReal(), Gf.Vec3f(q.GetImaginary())) ]
-           # print(arrayss)
-          #  allRotations.append
         
-    #print(bindPoseMat4)
     skeleton.CreateJointsAttr(jointOrder)
     skeleton.CreateBindTransformsAttr().Set(bindPoseMat4)
     skeleton.CreateRestTransformsAttr().Set(restPoseMat4)
@@ -176,6 +167,9 @@ def WriteRig(obj,stage):
     for frame, rotList in enumerate(allRotations, start=1):
         vt_quats = Vt.QuatfArray(rotList)
         rotAttr.Set(vt_quats, time=frame)
+
+        ##FIXME I don't think this works maybe once you add the skinclusters?
+        ## Rig doesn't move when its imported despite having differen quat values over time
 
     
 
@@ -206,7 +200,6 @@ if useSelected == True:
 if useSelected == False:
     objList = SeelctAll()
 
-#write world base xform
 
 
 for obj in objList:
