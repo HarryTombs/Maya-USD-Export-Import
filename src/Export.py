@@ -1,5 +1,6 @@
 import os
 import maya.cmds as cmds
+import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
 useSelected = True
@@ -29,7 +30,7 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, "my_export1.usda")
+    usdOutputPath = os.path.join(sceneDir, "my_export22222.usda")
     if os.path.isfile(usdOutputPath) == True:
         stage = Usd.Stage.Open(usdOutputPath)
         print(f"USD file found at: {usdOutputPath}")
@@ -58,21 +59,23 @@ def writeXform(obj,stage):
 
 def writeMesh(obj, stage):
     
-    import maya.api.OpenMaya as om
+
     
     select = om.MSelectionList()
     select.add(obj)
     dagPath = select.getDagPath(0)
     meshFN = om.MFnMesh(dagPath)
+    print(meshFN)
     usdPath = "/" + obj.replace("|","/").strip("/")
     usdMesh = UsdGeom.Mesh.Define(stage,f"/World{usdPath}")  
     array = meshFN.getPoints(om.MSpace.kTransform)
     points = []
+    print(array)
     if cmds.keyframe(obj,q =True,kc =True)>1:
-        print("keyframes")
+        for frame in range(int(startFrame), int(endFrame) + 1):
+            ...
     if cmds.keyframe(obj,q =True,kc =True)<1:
         print("no keyframes")
-#    for frame in rannge
     for pt in array:
         currentpoint = [*pt]
         Vec3list = [Gf.Vec3f(currentpoint[:-1])]
@@ -82,6 +85,18 @@ def writeMesh(obj, stage):
     usdMesh.GetFaceVertexCountsAttr().Set(counts)
     usdMesh.GetFaceVertexIndicesAttr().Set(indices)
     
+    xform = stage.GetPrimAtPath(f"/World{usdPath}")
+    
+    pos = cmds.xform(obj, query=True, ws=True, t=True)
+    rot = cmds.xform(obj, query=True, ws=True, ro=True)
+    
+    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate,pos)
+    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ,rot)
+    t_xform.Set(Gf.Vec3f(pos[0],pos[1],pos[2]))
+    r_xform.Set(Gf.Vec3f(rot[0],rot[1],rot[2]))
+    
+    #writeXform(obj,stage,f"/World{usdPath}")
+
     
 def writeCam(obj, stage):
     
@@ -97,8 +112,8 @@ def writeCam(obj, stage):
     horiAperture = cmds.getAttr(f"{shape}.horizontalFilmAperture")
     vertAperture = cmds.getAttr(f"{shape}.verticalFilmAperture")    
     
-    
     #FIXME if already written to file don't use Add.Set
+    
     
     usdCam.AddTranslateOp().Set(Gf.Vec3d(*translate))
     usdCam.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
@@ -115,13 +130,15 @@ def WriteRig(obj,stage):
     
     skelRootPath = cmds.ls(obj,sn=True)
     SkelRoot = UsdSkel.Root.Define(stage,f"/World/{skelRootPath[0]}")
+    rootPrim = stage.GetPrimAtPath(f"/World/{skelRootPath[0]}")
+    bindingRoot = UsdSkel.BindingAPI.Apply(rootPrim)
     skelPath = (f"/World/{skelRootPath[0]}/Skel")
     skeleton = UsdSkel.Skeleton.Define(stage,skelPath)
     skelAnimPath = (f"/World/{skelRootPath[0]}/Anim")
     skelAnim = UsdSkel.Animation.Define(stage,skelAnimPath)
     skelPrim = stage.GetPrimAtPath(skelPath)
-    binding = UsdSkel.BindingAPI.Apply(skelPrim)
-    binding.CreateAnimationSourceRel().SetTargets([Sdf.Path(skelAnimPath)])
+    bindingSkel = UsdSkel.BindingAPI.Apply(skelPrim)
+    bindingSkel.CreateAnimationSourceRel().SetTargets([Sdf.Path(skelAnimPath)])
 
     
     attr = skelAnim.CreateRotationsAttr()
@@ -186,6 +203,7 @@ def WriteRig(obj,stage):
             #print(geometry)
             #print(joints)
             
+            
 stage = CreateUSDA()
 
 print(stage)
@@ -211,12 +229,12 @@ for obj in objList:
     if cmds.listRelatives(obj, s=True, typ="mesh"):
         print("mesh")
         #writeXform(obj,stage)
-        #writeMesh(obj,stage)
+        writeMesh(obj,stage)
         
     elif cmds.listRelatives(obj, s=True, typ="camera"):  
         print("Camera")  
         writeCam(obj,stage)
-        #writeXform(obj,stage)
+        writeXform(obj,stage)
     elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
         print("Joints")
         WriteRig(obj,stage)
