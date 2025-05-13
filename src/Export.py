@@ -30,7 +30,7 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, "my_export22222.usda")
+    usdOutputPath = os.path.join(sceneDir, "my_export12.usda")
     if os.path.isfile(usdOutputPath) == True:
         stage = Usd.Stage.Open(usdOutputPath)
         print(f"USD file found at: {usdOutputPath}")
@@ -39,43 +39,50 @@ def CreateUSDA():
         print(f"USD file created at: {usdOutputPath}")
     return stage 
     
-def checkXform(xform, transType,input):
+def checkXform(xform, transType):
     for op in xform.GetOrderedXformOps():
         if op.GetOpType() == transType:
             return op
     return xform.AddXformOp(transType)
-
         
-def writeXform(obj,stage):
-    xform = UsdGeom.Xform.Define(stage, f"/{obj.strip('|').replace('|', '/')}")
-    
-    pos = cmds.xform(obj, query=True, ws=True, t=True)
-    rot = cmds.xform(obj, query=True, ws=True, ro=True)
-    
-    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate,pos)
-    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ,rot)
-    t_xform.Set(Gf.Vec3f(pos[0],pos[1],pos[2]))
-    r_xform.Set(Gf.Vec3f(rot[0],rot[1],rot[2]))
+def setXform(obj,xform):
 
-def writeMesh(obj, stage):
-    
+    cmds.currentTime(1, edit= True)
 
+    t_xform = xform.AddXformOp(UsdGeom.XformOp.TypeTranslate)
+    r_xform = xform.AddXformOp(UsdGeom.XformOp.TypeRotateXYZ)
+    # t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
+    # r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
+
+    if cmds.keyframe(obj,q =True,kc =True)>1:
+        for frame in range(int(startFrame), int(endFrame) + 1):
+            cmds.currentTime(frame, edit= True)
+            time = Usd.TimeCode(frame)
+            pos = cmds.xform(obj, query=True, ws=True, t=True)
+            rot = cmds.xform(obj, query=True, ws=True, ro=True)
+            t_xform.Set(Gf.Vec3f(*pos),time)
+            r_xform.Set(Gf.Vec3f(*rot),time)
+
+    else: 
+        pos = cmds.xform(obj, query=True, ws=True, t=True)
+        rot = cmds.xform(obj, query=True, ws=True, ro=True)
+        t_xform.Set(Gf.Vec3f(*pos))
+        r_xform.Set(Gf.Vec3f(*rot))
+
+
+
+
+
+
+def writeMesh(obj,stage,path):
     
     select = om.MSelectionList()
     select.add(obj)
     dagPath = select.getDagPath(0)
     meshFN = om.MFnMesh(dagPath)
-    print(meshFN)
-    usdPath = "/" + obj.replace("|","/").strip("/")
-    usdMesh = UsdGeom.Mesh.Define(stage,f"/World{usdPath}")  
+    usdMesh = UsdGeom.Mesh.Define(stage,path)  
     array = meshFN.getPoints(om.MSpace.kTransform)
     points = []
-    print(array)
-    if cmds.keyframe(obj,q =True,kc =True)>1:
-        for frame in range(int(startFrame), int(endFrame) + 1):
-            ...
-    if cmds.keyframe(obj,q =True,kc =True)<1:
-        print("no keyframes")
     for pt in array:
         currentpoint = [*pt]
         Vec3list = [Gf.Vec3f(currentpoint[:-1])]
@@ -85,40 +92,29 @@ def writeMesh(obj, stage):
     usdMesh.GetFaceVertexCountsAttr().Set(counts)
     usdMesh.GetFaceVertexIndicesAttr().Set(indices)
     
-    xform = stage.GetPrimAtPath(f"/World{usdPath}")
-    
-    pos = cmds.xform(obj, query=True, ws=True, t=True)
-    rot = cmds.xform(obj, query=True, ws=True, ro=True)
-    
-    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate,pos)
-    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ,rot)
-    t_xform.Set(Gf.Vec3f(pos[0],pos[1],pos[2]))
-    r_xform.Set(Gf.Vec3f(rot[0],rot[1],rot[2]))
-    
-    #writeXform(obj,stage,f"/World{usdPath}")
+    xform = UsdGeom.Xform(stage.GetPrimAtPath(path))
+
+    setXform(obj,xform)
 
     
-def writeCam(obj, stage):
     
-    camPath = "/" + obj.replace("|", "/").strip("/")
-    usdCam = UsdGeom.Camera.Define(stage, f"/World{camPath}")
+def writeCam(obj, stage,path):
     
-    translate = cmds.xform(obj, q=True, ws=True, t=True)
-    rotate = cmds.xform(obj, q=True, ws=True, ro=True)
+    usdCam = UsdGeom.Camera.Define(stage, f"{path}")
     
     shape = cmds.listRelatives(obj, shapes=True)[0]
     focalLength = cmds.getAttr(f"{shape}.focalLength")
     
     horiAperture = cmds.getAttr(f"{shape}.horizontalFilmAperture")
     vertAperture = cmds.getAttr(f"{shape}.verticalFilmAperture")    
-    
-    #FIXME if already written to file don't use Add.Set
-    
-    
-    usdCam.AddTranslateOp().Set(Gf.Vec3d(*translate))
-    usdCam.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
-    
 
+    pos = cmds.xform(obj, query=True, ws=True, t=True)
+    rot = cmds.xform(obj, query=True, ws=True, ro=True)
+
+    xform = UsdGeom.Xform(stage.GetPrimAtPath(path))
+    
+    setXform(obj,xform)
+    
     usdCam.GetFocalLengthAttr().Set(focalLength)
     
     usdCam.GetHorizontalApertureAttr().Set(horiAperture)
@@ -132,13 +128,23 @@ def WriteRig(obj,stage):
     SkelRoot = UsdSkel.Root.Define(stage,f"/World/{skelRootPath[0]}")
     rootPrim = stage.GetPrimAtPath(f"/World/{skelRootPath[0]}")
     bindingRoot = UsdSkel.BindingAPI.Apply(rootPrim)
+
     skelPath = (f"/World/{skelRootPath[0]}/Skel")
     skeleton = UsdSkel.Skeleton.Define(stage,skelPath)
     skelAnimPath = (f"/World/{skelRootPath[0]}/Anim")
     skelAnim = UsdSkel.Animation.Define(stage,skelAnimPath)
     skelPrim = stage.GetPrimAtPath(skelPath)
+
     bindingSkel = UsdSkel.BindingAPI.Apply(skelPrim)
     bindingSkel.CreateAnimationSourceRel().SetTargets([Sdf.Path(skelAnimPath)])
+
+    meshPath = (f"/World/{skelRootPath[0]}/SkelMesh")
+    usdMesh = UsdGeom.Mesh.Define(stage,meshPath)
+    meshPrim = stage.GetPrimAtPath(meshPath)
+    meshBinding = UsdSkel.BindingAPI.Apply(meshPrim)
+    meshBinding.CreateSkeletonRel().SetTargets([skelPath])
+    
+
 
     
     attr = skelAnim.CreateRotationsAttr()
@@ -192,16 +198,26 @@ def WriteRig(obj,stage):
 
     
     shapes = cmds.listRelatives(obj, ad =True, fullPath=True) or []
+    #print(shapes)
     for shape in shapes:
         history = cmds.listHistory(shape)
         skinClusters = cmds.ls(history, type='skinCluster')
         for sc in skinClusters:
-            geometry = cmds.skinCluster(sc, q=True, g=True)
+            
             # Get the joints influencing the skinCluster
             joints = cmds.skinCluster(sc, q=True, inf=True)
-            #print(sc)
-            #print(geometry)
-            #print(joints)
+            select = om.MSelectionList()
+            #select.add(geometry)
+            #dagPath = select.getDagPath(0)
+            #meshFN = om.MFnMesh(dagPath)
+            #usdMesh = UsdGeom.Mesh.Define(stage,path)  
+            #array = meshFN.getPoints(om.MSpace.kTransform)
+            #print(array)
+            # print(sc)
+
+            # print(joints)
+        geometry = cmds.skinCluster(shape, q=True, g=True)    
+        print(geometry)
             
             
 stage = CreateUSDA()
@@ -228,13 +244,13 @@ for obj in objList:
 
     if cmds.listRelatives(obj, s=True, typ="mesh"):
         print("mesh")
-        #writeXform(obj,stage)
-        writeMesh(obj,stage)
+        usdMeshPath = "/World/" + obj.replace("|","/").strip("/")
+        writeMesh(obj,stage,usdMeshPath)
         
     elif cmds.listRelatives(obj, s=True, typ="camera"):  
         print("Camera")  
-        writeCam(obj,stage)
-        writeXform(obj,stage)
+        usdCamPath = "/World/" + obj.replace("|","/").strip("/")
+        writeCam(obj,stage,usdCamPath)
     elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
         print("Joints")
         WriteRig(obj,stage)
@@ -248,4 +264,9 @@ stage.GetRootLayer().Save()
     
     
 
- 
+ ## Get the skin clusters out of there so the mesh exists
+
+ ## Get a script to import into unreal
+
+ ## you need to manually apply the animation data yourself :(
+
