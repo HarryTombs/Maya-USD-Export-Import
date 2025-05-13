@@ -1,9 +1,10 @@
 import os
+import subprocess
 import maya.cmds as cmds
 import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
-useSelected = True
+useSelected = False
 
 startFrame = cmds.playbackOptions(q=True, min=True)
 endFrame = cmds.playbackOptions(q=True, max=True)
@@ -12,7 +13,7 @@ frameTimeCode = 24.0
 
 def SelectAllButCameras():
     exclude = {"|front","|persp","|side","|top"}
-    selected = cmds.ls(tr=True, lt=True, l=True)
+    selected = cmds.ls(assemblies=True, l=True)
     return [obj for obj in selected if obj not in exclude]
     #thanks Jon
 
@@ -22,7 +23,7 @@ def SelectCurrent():
         print("Selection is empty")
     return selectedName
 
-def CreateUSDA():
+def CreateUSDA(name):
 
     scenePath = cmds.file(query=True, sceneName=True)
 
@@ -30,7 +31,7 @@ def CreateUSDA():
         raise RuntimeError("Scene must be saved before determining save location.")
 
     sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, "my_export12.usda")
+    usdOutputPath = os.path.join(sceneDir, f"{name}.usda")
     if os.path.isfile(usdOutputPath) == True:
         stage = Usd.Stage.Open(usdOutputPath)
         print(f"USD file found at: {usdOutputPath}")
@@ -49,10 +50,8 @@ def setXform(obj,xform):
 
     cmds.currentTime(1, edit= True)
 
-    t_xform = xform.AddXformOp(UsdGeom.XformOp.TypeTranslate)
-    r_xform = xform.AddXformOp(UsdGeom.XformOp.TypeRotateXYZ)
-    # t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
-    # r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
+    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
+    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
 
     if cmds.keyframe(obj,q =True,kc =True)>1:
         for frame in range(int(startFrame), int(endFrame) + 1):
@@ -108,9 +107,6 @@ def writeCam(obj, stage,path):
     horiAperture = cmds.getAttr(f"{shape}.horizontalFilmAperture")
     vertAperture = cmds.getAttr(f"{shape}.verticalFilmAperture")    
 
-    pos = cmds.xform(obj, query=True, ws=True, t=True)
-    rot = cmds.xform(obj, query=True, ws=True, ro=True)
-
     xform = UsdGeom.Xform(stage.GetPrimAtPath(path))
     
     setXform(obj,xform)
@@ -145,7 +141,6 @@ def WriteRig(obj,stage):
     meshBinding.CreateSkeletonRel().SetTargets([skelPath])
     
 
-
     
     attr = skelAnim.CreateRotationsAttr()
     
@@ -164,10 +159,8 @@ def WriteRig(obj,stage):
         else:
             bindPoseMat4.append(Gf.Matrix4d()) # some of them were none so they're getting an identity matrix
         restPoseMat4.append(Gf.Matrix4d(restPose[0],restPose[1],restPose[2],restPose[3],restPose[4],restPose[5],restPose[6],restPose[7],restPose[8],restPose[9],restPose[10],restPose[11],restPose[12],restPose[13],restPose[14],restPose[15]))
-    
-    num = 0
+
     for frame in range(int(startFrame), int(endFrame) + 1):
-        
 
         cmds.currentTime(frame, edit= True)
         frameQuats = []
@@ -216,11 +209,12 @@ def WriteRig(obj,stage):
             # print(sc)
 
             # print(joints)
-        geometry = cmds.skinCluster(shape, q=True, g=True)    
-        print(geometry)
+        #geometry = cmds.skinCluster(shape, q=True, g=True)    
+        #print(geometry)
+   
+name = "EXPORT2"         
             
-            
-stage = CreateUSDA()
+stage = CreateUSDA(name)
 
 print(stage)
 
@@ -234,13 +228,10 @@ if useSelected == True:
     objList = SelectCurrent()
 
 if useSelected == False:
-    objList = SeelctAll()
-
-
+    objList = SelectAllButCameras()
+    print(objList)
 
 for obj in objList:
-    #keys = cmds.keyframe(obj,q =True,kc =True)
-    #print(keys)
 
     if cmds.listRelatives(obj, s=True, typ="mesh"):
         print("mesh")
@@ -254,15 +245,18 @@ for obj in objList:
     elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
         print("Joints")
         WriteRig(obj,stage)
-               
         
         
 stage.GetRootLayer().Save()
+
+# unrealProjLocation = fr'"C:\Users\ht-23\Documents\Unreal Projects\MyProject\MyProject.uproject"'
+
+# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation}'
+
+# subprocess.run(command, shell=True)
+
     
-    
-    
-    
-    
+
 
  ## Get the skin clusters out of there so the mesh exists
 

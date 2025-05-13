@@ -36,8 +36,8 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(selected,['|testSphere'])
 
     def test_create_USDA(self):
-        USDA_Export = Export.CreateUSDA()
-        self.assertEqual(os.path.basename(USDA_Export.GetRootLayer().identifier),'my_export1.usda')
+        USDA_Export = Export.CreateUSDA("Export")
+        self.assertEqual(os.path.basename(USDA_Export.GetRootLayer().identifier),'Export.usda')
 
 if __name__ == '__main__':
     unittest.main()
