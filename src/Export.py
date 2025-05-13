@@ -4,7 +4,7 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
-useSelected = False
+useSelected = True
 
 startFrame = cmds.playbackOptions(q=True, min=True)
 endFrame = cmds.playbackOptions(q=True, max=True)
@@ -69,10 +69,6 @@ def setXform(obj,xform):
         r_xform.Set(Gf.Vec3f(*rot))
 
 
-
-
-
-
 def writeMesh(obj,stage,path):
     
     select = om.MSelectionList()
@@ -95,7 +91,6 @@ def writeMesh(obj,stage,path):
 
     setXform(obj,xform)
 
-    
     
 def writeCam(obj, stage,path):
     
@@ -249,9 +244,13 @@ for obj in objList:
         
 stage.GetRootLayer().Save()
 
+### You can use this to run a headerless version of the unreal project and run the import script :)
+
 # unrealProjLocation = fr'"C:\Users\ht-23\Documents\Unreal Projects\MyProject\MyProject.uproject"'
 
-# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation}'
+# ImportScript = fr'"./Import.py"'  !!!! CHANGE THE PYTHON SCRIPT TO WORK !!!!
+ 
+# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation} -run=pythonscript -script='
 
 # subprocess.run(command, shell=True)
 
