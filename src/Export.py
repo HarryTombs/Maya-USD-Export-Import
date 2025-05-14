@@ -183,8 +183,6 @@ def WriteRig(obj,stage):
         ## Rig doesn't move when its imported despite having differen quat values over time
 
     
-
-    
     shapes = cmds.listRelatives(obj, ad =True, fullPath=True) or []
     #print(shapes)
     for shape in shapes:
@@ -195,17 +193,44 @@ def WriteRig(obj,stage):
             # Get the joints influencing the skinCluster
             joints = cmds.skinCluster(sc, q=True, inf=True)
             select = om.MSelectionList()
-            #select.add(geometry)
-            #dagPath = select.getDagPath(0)
-            #meshFN = om.MFnMesh(dagPath)
-            #usdMesh = UsdGeom.Mesh.Define(stage,path)  
-            #array = meshFN.getPoints(om.MSpace.kTransform)
-            #print(array)
-            # print(sc)
+            geometry = cmds.skinCluster(shape, q=True, g=True)
+            print(geometry)
 
-            # print(joints)
-        #geometry = cmds.skinCluster(shape, q=True, g=True)    
-        #print(geometry)
+            # select = om.MSelectionList()
+            # select.add(geometry)
+            # dagPath = select.getDagPath(0)
+            # print(dagPath)
+            # meshFN = om.MFnMesh(dagPath)
+            # vertexCount = meshFN.numVertices
+
+            # jointIndicies = []
+            # jointWeights = []
+
+            # for i in range(vertexCount):
+            #     indices = []
+            #     weights = []
+
+            #     for jindex, joint in enumerate(joints):
+            #         weight = cmds.skinPercent(sc, f"{geometry}.vtx[{i}]", transform=joint, query=True)
+            #         if weight > 0.0:
+            #             indices.append(jIndex)
+            #             weights.append(weight)
+
+            #     while len(indices) < 4: 
+            #         indices.append(0)
+            #         weight.append(0.0)
+                
+            #     jointIndicies.extend(indices)
+            #     jointWeights.extend(weights)
+
+            # usdMesh = UsdGeom.Mesh(stage.GetPrimAtPath(f"/World/{skelRootPath[0]}/SkelMesh"))
+            # meshBinding = UsdSkel.BindingAPI.Apply(usdMesh.GetPrim())
+
+            # meshBinding.CreateJointIndicesPrimvar(False, 1).Set(Vt.IntArray(jointIndices))
+            # meshBinding.CreateJointWeightsPrimvar(False, 1).Set(Vt.FloatArray(jointWeights))
+
+            # meshBinding.CreateSkeletonRel().SetTargets([skelPath])
+
    
 name = "EXPORT"         
             
@@ -243,17 +268,6 @@ for obj in objList:
         
 stage.GetRootLayer().Save()
 
-### You can use this to run a headerless version of the unreal project and run the import script :)
-
-# unrealProjLocation = fr'"C:\Users\ht-23\Documents\Unreal Projects\MyProject\MyProject.uproject"'
-
-# ImportScript = fr'"./Import.py"' 
- 
-# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation} -run=pythonscript -script=ImportScript'
-
-# subprocess.run(command, shell=True)
-
-    
 
 
  ## Get the skin clusters out of there so the mesh exists
