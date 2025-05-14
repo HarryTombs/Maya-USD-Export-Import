@@ -1,14 +1,16 @@
 import unreal
 
-fileName = fr"EXPORT.usda"
-fileDir = fr"C:\Users\ht-23\Documents\PythonProjects\USDMayaAnimImporter\{filename}"
+unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/ThirdPerson/Maps/ThirdPersonMap.umap")
 
-usd_import_options = unreal.UsdStageImportOptions()
-for attr in dir(usd_import_options):
-    if not attr.startswith('_'):
-        print(attr)
 
-i = 0
-while i < 100:
-    print(i)
-    i += 1
+unreal.log("runningScript")
+
+unreal.log("Headlessly Running file")
+
+destination = r"/Game/TestFolder"
+
+if not unreal.EditorAssetLibrary.does_directory_exist(destination):
+    unreal.EditorAssetLibrary.make_directory(destination)
+    unreal.log(f"Created Folder: {destination}")
+else:
+    unreal.log(f"Folder Already exists: {destination}")
