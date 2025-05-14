@@ -2,8 +2,8 @@ import maya.standalone
 maya.standalone.initialize(name='Test')
 
 import unittest
-import os
 import maya.cmds as cmds
+import maya.api.OpenMaya as om
 from pxr import UsdGeom
 
 import sys
@@ -19,6 +19,7 @@ cmds.file(rn="test.ma")
 cmds.file(save=True, type="mayaAscii")
 cube = cmds.polyCube(name='testCube', sx=5, sy=5, sz=5)
 sphere = cmds.polySphere(name='testSphere')
+cam = cmds.camera(name='testCamera1')
 import Export
 
 stage = Export.CreateUSDA("Export")
@@ -34,11 +35,11 @@ xform = UsdGeom.Xform(stage.GetPrimAtPath(usdPath))
 class TestExporter(unittest.TestCase):
 
     def setUp(self):
-        print("Saving")       
+        return super().setUp()    
 
     def test_select_all_but_cameras(self):
         selected = Export.SelectAllButCameras()
-        self.assertEqual(selected, ['|testCube','|testSphere'])
+        self.assertEqual(selected, ['|testCube','|testSphere','|testCamera1'])
 
     def test_select_Current(self):
         cmds.select('testSphere')
@@ -56,6 +57,29 @@ class TestExporter(unittest.TestCase):
         Export.setXform(sphere,xform)
         pos = cmds.xform(sphere, query=True, ws=True, t=True)
         rot = cmds.xform(sphere, query=True, ws=True, ro=True)
+        Ops = xform.GetOrderedXformOps()
+        transValue = Ops[0].Get()
+        rotValue = Ops[1].Get()
+        self.assertEqual(transValue,pos)
+        self.assertEqual(rotValue,rot)
+
+    def test_write_mesh(self):
+        cmds.select('testSphere')
+        useSphere = Export.SelectCurrent()
+        Export.writeMesh(useSphere[0],stage,usdPath)
+        pos = cmds.xform(sphere, query=True, ws=True, t=True)
+        rot = cmds.xform(sphere, query=True, ws=True, ro=True)
+        Ops = xform.GetOrderedXformOps()
+        transValue = Ops[0].Get()
+        rotValue = Ops[1].Get()
+        self.assertEqual(transValue,pos)
+        self.assertEqual(rotValue,rot)
+
+
+    def test_write_cam(self):
+        Export.writeCam(cam,stage,usdPath)
+        pos = cmds.xform(cam, query=True, ws=True, t=True)
+        rot = cmds.xform(cam, query=True, ws=True, ro=True)
         Ops = xform.GetOrderedXformOps()
         transValue = Ops[0].Get()
         rotValue = Ops[1].Get()

@@ -207,11 +207,10 @@ def WriteRig(obj,stage):
         #geometry = cmds.skinCluster(shape, q=True, g=True)    
         #print(geometry)
    
-name = "EXPORT2"         
+name = "EXPORT"         
             
 stage = CreateUSDA(name)
 
-print(stage)
 
 worldPrim = stage.DefinePrim("/World", "Xform")
 
@@ -224,7 +223,7 @@ if useSelected == True:
 
 if useSelected == False:
     objList = SelectAllButCameras()
-    print(objList)
+
 
 for obj in objList:
 
@@ -248,9 +247,9 @@ stage.GetRootLayer().Save()
 
 # unrealProjLocation = fr'"C:\Users\ht-23\Documents\Unreal Projects\MyProject\MyProject.uproject"'
 
-# ImportScript = fr'"./Import.py"'  !!!! CHANGE THE PYTHON SCRIPT TO WORK !!!!
+# ImportScript = fr'"./Import.py"' 
  
-# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation} -run=pythonscript -script='
+# command = fr'> UnrealEditor-Cmd.exe {unrealProjLocation} -run=pythonscript -script=ImportScript'
 
 # subprocess.run(command, shell=True)
 
