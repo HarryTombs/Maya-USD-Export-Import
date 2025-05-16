@@ -11,7 +11,7 @@ for installation in data["InstallationList"]:
     if((installation['AppName'][:2]) == 'UE'):
         Unrealinstall = installation['InstallLocation']
 
-path = os.path.abspath(os.getcwd())        
+path = os.path.abspath(os.getcwd())
 
 Unrealinstall += r"\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 

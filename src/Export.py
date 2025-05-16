@@ -52,6 +52,7 @@ def setXform(obj,xform):
 
     t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
     r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
+    s_xform = checkXform(xform,UsdGeom.XformOp.TypeScale)
 
     if cmds.keyframe(obj,q =True,kc =True)>1:
         for frame in range(int(startFrame), int(endFrame) + 1):
@@ -59,14 +60,20 @@ def setXform(obj,xform):
             time = Usd.TimeCode(frame)
             pos = cmds.xform(obj, query=True, ws=True, t=True)
             rot = cmds.xform(obj, query=True, ws=True, ro=True)
+            scale = cmds.xform(obj, query=True, ws=True, s=True)
             t_xform.Set(Gf.Vec3f(*pos),time)
             r_xform.Set(Gf.Vec3f(*rot),time)
+            s_xform.Set(Gf.Vec3f(*scale),time)
+            
 
     else: 
         pos = cmds.xform(obj, query=True, ws=True, t=True)
         rot = cmds.xform(obj, query=True, ws=True, ro=True)
+        scale = cmds.xform(obj, query=True, ws=True, s=True)
         t_xform.Set(Gf.Vec3f(*pos))
         r_xform.Set(Gf.Vec3f(*rot))
+        s_xform.Set(Gf.Vec3f(*scale))
+
 
 
 def writeMesh(obj,stage,path):
@@ -74,6 +81,8 @@ def writeMesh(obj,stage,path):
     select = om.MSelectionList()
     select.add(obj)
     dagPath = select.getDagPath(0)
+    print(dagPath)
+    print(type(dagPath))
     meshFN = om.MFnMesh(dagPath)
     usdMesh = UsdGeom.Mesh.Define(stage,path)  
     array = meshFN.getPoints(om.MSpace.kTransform)
@@ -182,57 +191,83 @@ def WriteRig(obj,stage):
         ##FIXME I don't think this works maybe once you add the skinclusters?
         ## Rig doesn't move when its imported despite having differen quat values over time
 
-    
-    shapes = cmds.listRelatives(obj, ad =True, fullPath=True) or []
-    #print(shapes)
-    for shape in shapes:
-        history = cmds.listHistory(shape)
-        skinClusters = cmds.ls(history, type='skinCluster')
-        for sc in skinClusters:
+    countsList = []
+    indicesList = []
+    pointsList = []
+    points = []
+
+    skinClusters = cmds.ls(type='skinCluster')
+    for sc in skinClusters:
+        
+        # Get the joints influencing the skinCluster
+        joints = cmds.skinCluster(sc, q=True, inf=True)
+        geometry = cmds.skinCluster(sc, q=True, g=True)
+        #print(geometry)
+        #print(joints)
+        selected = om.MSelectionList()
+        selected.add(geometry[0])
+        dagPath = selected.getDagPath(0)
+        #print(dagPath)
+        #print(type(dagPath))
+        #print(dagPath.fullPathName())
+        #print(dagPath.node().apiTypeStr)
+        jointIndicies = []
+        jointWeights = []
+        if (dagPath.node().apiTypeStr == "kMesh"):
+            dagPath.extendToShape() 
+            meshFN = om.MFnMesh(dagPath)
+            vertexCount = meshFN.numVertices
+
+            array = meshFN.getPoints(om.MSpace.kTransform)
+            points = []
+            for pt in array:
+                currentpoint = [*pt]
+                Vec3list = [Gf.Vec3f(currentpoint[:-1])]
+                points = points + Vec3list
+            counts, indices = meshFN.getVertices()
+            for c in counts:
+                countsList.append(c)
+            for i in indices:
+                indicesList.append(i)
+
             
-            # Get the joints influencing the skinCluster
-            joints = cmds.skinCluster(sc, q=True, inf=True)
-            select = om.MSelectionList()
-            geometry = cmds.skinCluster(shape, q=True, g=True)
-            print(geometry)
 
-            # select = om.MSelectionList()
-            # select.add(geometry)
-            # dagPath = select.getDagPath(0)
-            # print(dagPath)
-            # meshFN = om.MFnMesh(dagPath)
-            # vertexCount = meshFN.numVertices
+            for i in range(vertexCount):
+                jIndices = []
+                weights = []
 
-            # jointIndicies = []
-            # jointWeights = []
+                for jIndex, joint in enumerate(joints):
+                    weight = cmds.skinPercent(sc, f"{geometry[0]}.vtx[{i}]", transform=joint, query=True)
+                    if weight > 0.0:
+                        jIndices.append(jIndex)
+                        weights.append(weight)
 
-            # for i in range(vertexCount):
-            #     indices = []
-            #     weights = []
-
-            #     for jindex, joint in enumerate(joints):
-            #         weight = cmds.skinPercent(sc, f"{geometry}.vtx[{i}]", transform=joint, query=True)
-            #         if weight > 0.0:
-            #             indices.append(jIndex)
-            #             weights.append(weight)
-
-            #     while len(indices) < 4: 
-            #         indices.append(0)
-            #         weight.append(0.0)
+                while len(jIndices) < 4: 
+                    jIndices.append(0)
+                    weights.append(0.0)
                 
-            #     jointIndicies.extend(indices)
-            #     jointWeights.extend(weights)
+                jointIndicies.extend(jIndices)
+                jointWeights.extend(weights)
+        # print(jointIndicies)
+        # print(jointWeights)
 
-            # usdMesh = UsdGeom.Mesh(stage.GetPrimAtPath(f"/World/{skelRootPath[0]}/SkelMesh"))
-            # meshBinding = UsdSkel.BindingAPI.Apply(usdMesh.GetPrim())
+        #usdMesh = UsdGeom.Mesh(stage.GetPrimAtPath(f"/World/{skelRootPath[0]}/SkelMesh"))
+        meshBinding = UsdSkel.BindingAPI.Apply(usdMesh.GetPrim())
 
-            # meshBinding.CreateJointIndicesPrimvar(False, 1).Set(Vt.IntArray(jointIndices))
-            # meshBinding.CreateJointWeightsPrimvar(False, 1).Set(Vt.FloatArray(jointWeights))
+        # print(countsList)
+        #print(indicesList)
+        usdMesh.GetFaceVertexCountsAttr().Set(countsList)
+        usdMesh.GetFaceVertexIndicesAttr().Set(indicesList)
+        usdMesh.GetPointsAttr().Set(points)
 
-            # meshBinding.CreateSkeletonRel().SetTargets([skelPath])
+        meshBinding.CreateJointIndicesPrimvar(False, 1).Set(Vt.IntArray(jointIndicies))
+        meshBinding.CreateJointWeightsPrimvar(False, 1).Set(Vt.FloatArray(jointWeights))
+
+        meshBinding.CreateSkeletonRel().SetTargets([skelPath])
+            
 
    
-name = "EXPORT"         
+name = "EXPORT3"         
             
 stage = CreateUSDA(name)
 
@@ -242,6 +277,7 @@ worldPrim = stage.DefinePrim("/World", "Xform")
 stage.SetStartTimeCode(int(startFrame))
 stage.SetEndTimeCode(int(endFrame))
 stage.SetTimeCodesPerSecond(int(frameTimeCode))
+UsdGeom.SetStageMetersPerUnit(stage,1.0)
  
 if useSelected == True:
     objList = SelectCurrent()
