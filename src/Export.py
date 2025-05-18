@@ -1,20 +1,11 @@
 import os
-import subprocess
 import sys
+import json
+import tempfile
 import maya.cmds as cmds
 import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
-#path = os.path.abspath(os.getcwd())
-#sys.path.append(fr"{path}\src")
-
-## Only do this once
-
-import LaunchUnreal
-
-# useSelected = True
-# unrealProject = r"D:\UnrealProjects\ImporterProject2\ImporterProject2.uproject"
-# name = "EXPORT333"  
 
 startFrame = cmds.playbackOptions(q=True, min=True)
 endFrame = cmds.playbackOptions(q=True, max=True)
@@ -195,9 +186,6 @@ def WriteRig(obj,stage):
         vt_quats = Vt.QuatfArray(rotList)
         rotAttr.Set(vt_quats, time=frame)
 
-        ##FIXME I don't think this works maybe once you add the skinclusters?
-        ## Rig doesn't move when its imported despite having differen quat values over time
-
     countsList = []
     indicesList = []
     pointsList = []
@@ -290,32 +278,50 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
     if useSelected == False:
         objList = SelectAllButCameras()
 
+    json_file = (os.path.abspath(os.getcwd()) + r"\Temp\Usd_info.json")
+    os.makedirs(os.path.dirname(json_file), exist_ok=True)
+    open(json_file, 'w').close()
+
+    json_data = []
+
 
     for obj in objList:
 
         if cmds.listRelatives(obj, s=True, typ="mesh"):
             print("mesh")
             usdMeshPath = "/World/" + obj.replace("|","/").strip("/")
+            objName = obj.replace("|","")            
             writeMesh(obj,stage,usdMeshPath)
-            
+            mesh_data = {
+                "usd_path": usdMeshPath,
+                "asset_name": objName
+            }
+            json_data.append(mesh_data)
         elif cmds.listRelatives(obj, s=True, typ="camera"):  
             print("Camera")  
             usdCamPath = "/World/" + obj.replace("|","/").strip("/")
+            objName = obj.replace("|","")
             writeCam(obj,stage,usdCamPath)
-        elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
+            cam_data = {
+                "usd_path": usdCamPath,
+                "asset_name": objName
+            }
+            json_data.append(cam_data)
+
+        elif cmds.listRelatives(obj,ad=True,type='joint'): 
             print("Joints")
             WriteRig(obj,stage)
-            
-            
+    
+    data = {
+        "USD_Data": json_data
+    }
+    with open(json_file,"a") as f:
+        json.dump((data),f, indent=4) 
     stage.GetRootLayer().Save()
-
-    #LaunchUnreal.launchUnreal(unrealProject)
 
     print(f"Sent to Unreal project: {unrealProject}")
 
 
-
-#ExecuteExport(name,unrealProject,useSelected)
 
  ## Get the skin clusters out of there so the mesh exists
 

@@ -3,3 +3,7 @@
 *.usda
 Tests/__pycache__
 MayaRigFile.ma
+/Temp/*
+Temp
+*.pyc
+/src/__pycache__/
