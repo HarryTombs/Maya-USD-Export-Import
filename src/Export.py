@@ -1,15 +1,24 @@
 import os
 import subprocess
+import sys
 import maya.cmds as cmds
 import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
-useSelected = True
+#path = os.path.abspath(os.getcwd())
+#sys.path.append(fr"{path}\src")
+
+## Only do this once
+
+import LaunchUnreal
+
+# useSelected = True
+# unrealProject = r"D:\UnrealProjects\ImporterProject2\ImporterProject2.uproject"
+# name = "EXPORT333"  
 
 startFrame = cmds.playbackOptions(q=True, min=True)
 endFrame = cmds.playbackOptions(q=True, max=True)
-frameTimeCode = 24.0
-
+frameTimeCode = 24.0   
 
 def SelectAllButCameras():
     exclude = {"|front","|persp","|side","|top"}
@@ -23,7 +32,7 @@ def SelectCurrent():
         print("Selection is empty")
     return selectedName
 
-def CreateUSDA(name):
+def CreateUSDA(name: str):
 
     scenePath = cmds.file(query=True, sceneName=True)
 
@@ -81,8 +90,6 @@ def writeMesh(obj,stage,path):
     select = om.MSelectionList()
     select.add(obj)
     dagPath = select.getDagPath(0)
-    print(dagPath)
-    print(type(dagPath))
     meshFN = om.MFnMesh(dagPath)
     usdMesh = UsdGeom.Mesh.Define(stage,path)  
     array = meshFN.getPoints(om.MSpace.kTransform)
@@ -264,51 +271,53 @@ def WriteRig(obj,stage):
         meshBinding.CreateJointWeightsPrimvar(False, 1).Set(Vt.FloatArray(jointWeights))
 
         meshBinding.CreateSkeletonRel().SetTargets([skelPath])
+
+
+def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, endFrame, frameTimeCode):   
+                
+    stage = CreateUSDA(name)
+
+    worldPrim = stage.DefinePrim("/World", "Xform")
+
+    stage.SetStartTimeCode(int(startFrame))
+    stage.SetEndTimeCode(int(endFrame))
+    stage.SetTimeCodesPerSecond(int(frameTimeCode))
+    UsdGeom.SetStageMetersPerUnit(stage,1.0)
+    
+    if useSelected == True:
+        objList = SelectCurrent()
+
+    if useSelected == False:
+        objList = SelectAllButCameras()
+
+
+    for obj in objList:
+
+        if cmds.listRelatives(obj, s=True, typ="mesh"):
+            print("mesh")
+            usdMeshPath = "/World/" + obj.replace("|","/").strip("/")
+            writeMesh(obj,stage,usdMeshPath)
             
-
-   
-name = "EXPORT3"         
+        elif cmds.listRelatives(obj, s=True, typ="camera"):  
+            print("Camera")  
+            usdCamPath = "/World/" + obj.replace("|","/").strip("/")
+            writeCam(obj,stage,usdCamPath)
+        elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
+            print("Joints")
+            WriteRig(obj,stage)
             
-stage = CreateUSDA(name)
+            
+    stage.GetRootLayer().Save()
+
+    #LaunchUnreal.launchUnreal(unrealProject)
+
+    print(f"Sent to Unreal project: {unrealProject}")
 
 
-worldPrim = stage.DefinePrim("/World", "Xform")
 
-stage.SetStartTimeCode(int(startFrame))
-stage.SetEndTimeCode(int(endFrame))
-stage.SetTimeCodesPerSecond(int(frameTimeCode))
-UsdGeom.SetStageMetersPerUnit(stage,1.0)
- 
-if useSelected == True:
-    objList = SelectCurrent()
-
-if useSelected == False:
-    objList = SelectAllButCameras()
-
-
-for obj in objList:
-
-    if cmds.listRelatives(obj, s=True, typ="mesh"):
-        print("mesh")
-        usdMeshPath = "/World/" + obj.replace("|","/").strip("/")
-        writeMesh(obj,stage,usdMeshPath)
-        
-    elif cmds.listRelatives(obj, s=True, typ="camera"):  
-        print("Camera")  
-        usdCamPath = "/World/" + obj.replace("|","/").strip("/")
-        writeCam(obj,stage,usdCamPath)
-    elif cmds.listRelatives(obj,ad=True,type='joint'): #we're assuming this is a rigged mesh
-        print("Joints")
-        WriteRig(obj,stage)
-        
-        
-stage.GetRootLayer().Save()
-
-
+#ExecuteExport(name,unrealProject,useSelected)
 
  ## Get the skin clusters out of there so the mesh exists
-
- ## Get a script to import into unreal
 
  ## you need to manually apply the animation data yourself :(
 

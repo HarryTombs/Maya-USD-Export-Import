@@ -2,27 +2,32 @@ import subprocess
 import json
 import os 
 
-unrealProject = r"D:\UnrealProjects\ImporterProject\ImporterProject.uproject"  ### THIS WILL BE INPUTED BY USER
-
-with open("C:\\ProgramData\\Epic\\UnrealEngineLauncher\\LauncherInstalled.dat","r") as f:
-    data = json.load(f)
+try:
+    with open("C:\\ProgramData\\Epic\\UnrealEngineLauncher\\LauncherInstalled.dat","r") as f:
+        data = json.load(f)
+except:
+    print("Couldn't find Unreal Directory")
 
 for installation in data["InstallationList"]:
     if((installation['AppName'][:2]) == 'UE'):
         Unrealinstall = installation['InstallLocation']
 
-path = os.path.abspath(os.getcwd())
+Projpath = os.path.abspath(os.getcwd())
 
-Unrealinstall += r"\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
+Unrealinstall += r"\Engine\Binaries\Win64\UnrealEditor.exe"
 
-Scriptpath = fr"{path}\src\Import.py"
+Scriptpath = fr"{Projpath}\src\Import.py"
 
-powershellScript = fr"{path}\unrealRun.ps1"
+Scriptpath = Scriptpath.replace("\\","/")
 
-subprocess.run([
-    "powershell",
-    "-File", powershellScript,
-    "-engine", Unrealinstall,
-    "-project", unrealProject,
-    "-script", Scriptpath
-], check=True)
+
+powershellScript = fr"{Projpath}\unrealRun.ps1"
+
+def launchUnreal(unrealProject: str):
+    subprocess.run([
+        "powershell",
+        "-File", powershellScript,
+        "-engine", Unrealinstall,
+        "-project", unrealProject,
+        "-script", Scriptpath
+    ], check=True)

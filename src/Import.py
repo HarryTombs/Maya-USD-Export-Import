@@ -1,33 +1,41 @@
 import unreal
 
-unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/ThirdPerson/Maps/ThirdPersonMap.umap")
+unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/ThirdPerson/Maps/ThirdPersonMap")
 
 unreal.log("Headlessly Running file")
 
-destination = r"/Game/UsdImport"
+
+destination = r"/Game/UsdImported"
 
 assetName = "Usd"  ## Get file name later
 
-usdFilePath = r"C:\Users\ht-23\Documents\PythonProjects\USDMayaAnimImporter\EXPORT3.usda" ## again get this later
+usdFilePath = r"C:\Users\ht-23\Documents\PythonProjects\USDMayaAnimImporter\EXPORT333.usda" ## again get this later
 
-task = unreal.AssetImportTask()
-task.filename = usdFilePath
-task.destination_path = destination
-task.destination_name = assetName
-task.replace_existing = True
-task.automated = True
-task.save = True
+# level_actors = unreal.EditorLevelLibrary.get_all_level_actors()
+
+spawn_location = unreal.Vector(0,0,0)
+spawn_rotation = unreal.Rotator(0,0,0)
+
+# for currentActor in level_actors:
+#     if currentActor.get_class().get_name() == "USDStageActor":
+#         unreal.EditorLevelLibrary.destroy_actor(currentActor)
 
 
-if not unreal.EditorAssetLibrary.does_directory_exist(destination):
-    unreal.EditorAssetLibrary.make_directory(destination)
-    unreal.log(f"Created Folder: {destination}")
-else:
-    unreal.log(f"Folder Already exists: {destination}")
+actor = unreal.EditorLevelLibrary.spawn_actor_from_class(
+    unreal.UsdStageActor,
+    spawn_location,
+    spawn_rotation
+)
 
-usd_options = unreal.UsdStageImportOptions()
-usd_options.import_actors = True
-usd_options.kinds_to_collapse = 1 | 4
-task.options = usd_options
+# actor.reload_stage()
 
-unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+unrealusdFile = unreal.FilePath(usdFilePath)
+
+actor.set_editor_property("root_layer", unrealusdFile)
+
+actor.set_editor_property("initial_load_set", unreal.UsdInitialLoadSet.LOAD_ALL)
+
+unreal.EditorLevelLibrary.save_current_level()
+
+
+
