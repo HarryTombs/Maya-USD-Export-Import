@@ -280,8 +280,8 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
 
     json_file = (os.path.abspath(os.getcwd()) + r"\Temp\Usd_info.json")
     os.makedirs(os.path.dirname(json_file), exist_ok=True)
+    
     open(json_file, 'w').close()
-
     json_data = []
 
 
@@ -294,7 +294,8 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
             writeMesh(obj,stage,usdMeshPath)
             mesh_data = {
                 "usd_path": usdMeshPath,
-                "asset_name": objName
+                "asset_name": objName,
+                "asset_type":"Mesh"
             }
             json_data.append(mesh_data)
         elif cmds.listRelatives(obj, s=True, typ="camera"):  
@@ -304,7 +305,8 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
             writeCam(obj,stage,usdCamPath)
             cam_data = {
                 "usd_path": usdCamPath,
-                "asset_name": objName
+                "asset_name": objName,
+                "asset_type": "Camera"
             }
             json_data.append(cam_data)
 
@@ -313,7 +315,7 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
             WriteRig(obj,stage)
     
     data = {
-        "USD_Data": json_data
+        "Exported_Data": json_data
     }
     with open(json_file,"a") as f:
         json.dump((data),f, indent=4) 

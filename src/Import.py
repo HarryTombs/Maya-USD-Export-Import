@@ -1,5 +1,7 @@
 import unreal
 import math
+import json
+import os
 from pxr import Usd
 
 def findActorRecursive(parent_Actor, class_filter=None):
@@ -50,11 +52,25 @@ actor.set_editor_property("initial_load_set", unreal.UsdInitialLoadSet.LOAD_ALL)
 
 camera = (findActorRecursive(actor,unreal.CameraActor))[0]
 
+Projpath = os.path.dirname(os.path.dirname(__file__) )
+
+with open(fr"{Projpath}\Temp\Usd_info.json") as f:
+        data = json.load(f)
+for info in data["Exported_Data"]:
+        if((info['asset_type']) == "Camera"):
+                CamPath = info["usd_path"]
+
+
+
 unreal.log(f"Actors are{camera}")
 
 stage = Usd.Stage.Open(usdFilePath)
 
-# UsdCam = stage.GetPrimAtPath(CamPath)
+UsdCam = stage.GetPrimAtPath(CamPath)
+
+focal_length = 0
+
+sensor_width = 0
 
 # FOV = 2 * math.atan((sensor_width / (2 * focal_length))) * (180 / math.pi)
 

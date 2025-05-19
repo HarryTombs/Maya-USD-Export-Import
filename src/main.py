@@ -15,4 +15,4 @@ endFrame = cmds.playbackOptions(q=True, max=True)
 frameTimeCode = 24.0   
 
 Export.ExecuteExport(UsdFilename,UnrealPath,UserSelected,startFrame,endFrame,frameTimeCode)
-LaunchUnreal.launchUnreal(UnrealPath)
+# LaunchUnreal.launchUnreal(UnrealPath)
