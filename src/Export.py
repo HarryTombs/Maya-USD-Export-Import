@@ -1,4 +1,5 @@
 from pathlib import Path
+import os 
 import sys
 import json
 import tempfile
@@ -13,7 +14,7 @@ frame_time_code = 24.0
 
 scene_data = []
 
-json_file = str(Path.cwd() / "Temp" / "Usd_info.json")
+json_file = (os.path.dirname(__file__) + r"\Temp\Usd_info.json")
 Path(json_file).parent.mkdir(parents=True, exist_ok=True)
 Path(json_file).write_text("")
 

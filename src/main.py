@@ -60,8 +60,8 @@ class MyWindow:
             self.select_bool = False
         try:
             start_export(self.name_text,self.unreal_text,self.select_bool)
-        except:
-            print("Export Failed")
+        except Exception as e:
+            print(f"Export Failed {e}")
         self.close()
     
     def locate_ureal_file(self) -> str:

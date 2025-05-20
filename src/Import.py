@@ -1,13 +1,13 @@
 import unreal
 import math
 import json
-from pathlib import Path
+import os
 from pxr import Usd, UsdGeom, Sdf
 
 
-proj_path = Path(__file__).resolve().parent.parent
+proj_path = os.path.dirname(__file__)
 
-with open(proj_path / "Temp" / "Usd_info.json") as f:
+with open(proj_path + r"/Temp/Usd_info.json") as f:
     data = json.load(f)
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/ThirdPerson/Maps/ThirdPersonMap")

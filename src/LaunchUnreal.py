@@ -1,6 +1,7 @@
 import subprocess
 import json
 from pathlib import Path
+import os
 
 try:
     with open("C:\\ProgramData\\Epic\\UnrealEngineLauncher\\LauncherInstalled.dat","r") as f:
@@ -12,9 +13,9 @@ for installation in data["InstallationList"]:
     if((installation['AppName'][:2]) == 'UE'):
         Unrealinstall = installation['InstallLocation']
 
-Projpath = str(Path.cwd())
+Projpath = os.path.dirname(__file__)
 Unrealinstall = str(Path(Unrealinstall) / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe")
-Scriptpath = str(Path(Projpath) / "src" / "Import.py")
+Scriptpath = str(Path(Projpath) / "Import.py")
 Scriptpath = Scriptpath.replace("\\","/")
 powershellScript = str(Path(Projpath) / "unrealRun.ps1")
 
