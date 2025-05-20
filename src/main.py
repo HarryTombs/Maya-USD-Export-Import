@@ -1,8 +1,8 @@
 import maya.cmds as cmds
 import sys
-import os
+from pathlib import Path
 
-path = os.path.abspath(os.getcwd())
+path = str(Path.cwd())
 sys.path.append(fr"{path}\src")
 
 import Export
@@ -58,7 +58,10 @@ class MyWindow:
             self.select_bool = True
         else:
             self.select_bool = False
-        start_export(self.name_text,self.unreal_text,self.select_bool)
+        try:
+            start_export(self.name_text,self.unreal_text,self.select_bool)
+        except:
+            print("Export Failed")
         self.close()
     
     def locate_ureal_file(self) -> str:
@@ -72,9 +75,4 @@ class MyWindow:
 
 win = MyWindow()
 win.create()
-
-
-# path = os.path.abspath(os.getcwd())
-# sys.path.append(fr"{path}\src")
-
 

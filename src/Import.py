@@ -1,23 +1,13 @@
 import unreal
 import math
 import json
-import os
+from pathlib import Path
 from pxr import Usd, UsdGeom, Sdf
 
-def find_actor_recursive(parent_actor, class_filter=None):
-    """Recursively find all children of parent_actor. Optionally filter by class."""
-    found = []
-    children = parent_actor.get_attached_actors()
 
-    for child in children:
-        if not class_filter or isinstance(child, class_filter):
-            found.append(child)
-        found.extend(find_actor_recursive(child, class_filter))
-    return found
+proj_path = Path(__file__).resolve().parent.parent
 
-proj_path = os.path.dirname(os.path.dirname(__file__) )
-
-with open(fr"{proj_path}\Temp\Usd_info.json") as f:
+with open(proj_path / "Temp" / "Usd_info.json") as f:
     data = json.load(f)
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/ThirdPerson/Maps/ThirdPersonMap")
@@ -28,7 +18,7 @@ for info in data["Scene_Data"]:
     asset_name = info["WorldName"]
     usd_file_path = info["FilePath"]
 
-usd_file_path = fr"{usd_file_path}"
+usd_file_path = str(usd_file_path)
 
 spawn_location = unreal.Vector(0,0,0)
 spawn_rotation = unreal.Rotator(0,0,0)

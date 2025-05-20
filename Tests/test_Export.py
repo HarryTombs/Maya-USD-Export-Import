@@ -22,14 +22,12 @@ sphere = cmds.polySphere(name='testSphere')
 cam = cmds.camera(name='testCamera1')
 import Export
 
-stage = Export.CreateUSDA("Export")
+stage = Export.create_usda("Export")
 worldPrim = stage.DefinePrim("/World", "Xform")
 
 usdPath = "/World/Prim"
 usdMesh = UsdGeom.Mesh.Define(stage,usdPath)  
 xform = UsdGeom.Xform(stage.GetPrimAtPath(usdPath))
-
-
 
 
 class TestExporter(unittest.TestCase):
@@ -38,23 +36,25 @@ class TestExporter(unittest.TestCase):
         return super().setUp()    
 
     def test_select_all_but_cameras(self):
-        selected = Export.SelectAllButCameras()
+        selected = Export.select_all_but_cameras()
         self.assertEqual(selected, ['|testCube','|testSphere','|testCamera1'])
+        self.assertNotIn('|persp',selected)
 
     def test_select_Current(self):
         cmds.select('testSphere')
-        selected = Export.SelectCurrent()
+        selected = Export.select_current()
         self.assertEqual(selected,['|testSphere'])
 
     def test_create_USDA(self):
-        USDA_Export = Export.CreateUSDA("Export")
+        USDA_Export = Export.create_usda("Export")
         self.assertEqual(os.path.basename(USDA_Export.GetRootLayer().identifier),'Export.usda')
     
     def test_check_xform(self):
-        checkedXform = Export.checkXform(xform, UsdGeom.XformOp.TypeTranslate)
+        checkedXform = Export.check_xform(xform, UsdGeom.XformOp.TypeTranslate)
         self.assertIsInstance(checkedXform, UsdGeom.XformOp)
+
     def test_set_xform(self):
-        Export.setXform(sphere,xform)
+        Export.set_xform(sphere,xform)
         pos = cmds.xform(sphere, query=True, ws=True, t=True)
         rot = cmds.xform(sphere, query=True, ws=True, ro=True)
         Ops = xform.GetOrderedXformOps()
@@ -65,8 +65,8 @@ class TestExporter(unittest.TestCase):
 
     def test_write_mesh(self):
         cmds.select('testSphere')
-        useSphere = Export.SelectCurrent()
-        Export.writeMesh(useSphere[0],stage,usdPath)
+        useSphere = Export.select_current()
+        Export.write_mesh(useSphere[0],stage,usdPath)
         pos = cmds.xform(sphere, query=True, ws=True, t=True)
         rot = cmds.xform(sphere, query=True, ws=True, ro=True)
         Ops = xform.GetOrderedXformOps()
@@ -77,7 +77,7 @@ class TestExporter(unittest.TestCase):
 
 
     def test_write_cam(self):
-        Export.writeCam(cam,stage,usdPath)
+        Export.write_cam(cam,stage,usdPath)
         pos = cmds.xform(cam, query=True, ws=True, t=True)
         rot = cmds.xform(cam, query=True, ws=True, ro=True)
         Ops = xform.GetOrderedXformOps()
@@ -85,6 +85,20 @@ class TestExporter(unittest.TestCase):
         rotValue = Ops[1].Get()
         self.assertEqual(transValue,pos)
         self.assertEqual(rotValue,rot)
+
+    def test_execute_export_all(self):
+        Export.execute_export(
+            name="ExportTestAll",
+            unreal_project="DummyProject",
+            use_selected=False,
+            start_frame=1,
+            end_frame=1,
+            frame_time_code=24.0
+        )
+        scene_path = cmds.file(query=True, sceneName=True)
+        scene_dir = os.path.dirname(scene_path)
+        usd_output_path = os.path.join(scene_dir, "ExportTestAll.usda")
+        self.assertTrue(os.path.isfile(usd_output_path))
 
 
 

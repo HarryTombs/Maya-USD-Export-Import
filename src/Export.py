@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import sys
 import json
 import tempfile
@@ -13,8 +13,9 @@ frame_time_code = 24.0
 
 scene_data = []
 
-json_file = (os.path.abspath(os.getcwd()) + r"\Temp\Usd_info.json")
-open(json_file, 'w').close()
+json_file = str(Path.cwd() / "Temp" / "Usd_info.json")
+Path(json_file).parent.mkdir(parents=True, exist_ok=True)
+Path(json_file).write_text("")
 
 
 
@@ -37,9 +38,9 @@ def create_usda(name: str) -> Usd.Stage:
     if not scene_path:
         raise RuntimeError("Scene must be saved before determining save location.")
 
-    scene_dir = os.path.dirname(scene_path)
-    usd_output_path = os.path.abspath(os.path.join(scene_dir, f"{name}.usda"))
-    if os.path.isfile(usd_output_path) == True:
+    scene_dir = str(Path(scene_path).parent)
+    usd_output_path = str(Path(scene_dir) / f"{name}.usda")
+    if Path(usd_output_path).is_file():
         stage = Usd.Stage.Open(usd_output_path)
         print(f"USD file found at: {usd_output_path}")
     else:
@@ -293,8 +294,8 @@ def execute_export(
 
     worldPrim = stage.DefinePrim("/World", "Xform")
 
-    os.makedirs(os.path.dirname(json_file), exist_ok=True)
-    open(json_file, 'w').close()
+    Path(json_file).parent.mkdir(parents=True, exist_ok=True)
+    Path(json_file).write_text("")
 
     stage.SetStartTimeCode(int(start_frame))
     stage.SetEndTimeCode(int(end_frame))
