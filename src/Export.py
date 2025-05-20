@@ -7,55 +7,70 @@ import maya.api.OpenMaya as om
 from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
 
 
-startFrame = cmds.playbackOptions(q=True, min=True)
-endFrame = cmds.playbackOptions(q=True, max=True)
-frameTimeCode = 24.0   
+start_frame = cmds.playbackOptions(q=True, min=True)
+end_frame = cmds.playbackOptions(q=True, max=True)
+frame_time_code = 24.0   
 
-def SelectAllButCameras():
+scene_data = []
+
+json_file = (os.path.abspath(os.getcwd()) + r"\Temp\Usd_info.json")
+open(json_file, 'w').close()
+
+
+
+def select_all_but_cameras() -> list:
     exclude = {"|front","|persp","|side","|top"}
     selected = cmds.ls(assemblies=True, l=True)
     return [obj for obj in selected if obj not in exclude]
     #thanks Jon
 
-def SelectCurrent():
-    selectedName = cmds.ls(l=True, sl=True)
-    if not selectedName:
-        print("Selection is empty")
-    return selectedName
+def select_current() -> list:
+    selected_name = cmds.ls(l=True, sl=True)
+    if not selected_name:
+        open(json_file, 'w').close()
+        exit("Selection is empty")
+    return selected_name
 
-def CreateUSDA(name: str):
-
-    scenePath = cmds.file(query=True, sceneName=True)
-
-    if not scenePath:
+def create_usda(name: str) -> Usd.Stage:
+    scene_data.clear()
+    scene_path = cmds.file(query=True, sceneName=True)
+    if not scene_path:
         raise RuntimeError("Scene must be saved before determining save location.")
 
-    sceneDir = os.path.dirname(scenePath)
-    usdOutputPath = os.path.join(sceneDir, f"{name}.usda")
-    if os.path.isfile(usdOutputPath) == True:
-        stage = Usd.Stage.Open(usdOutputPath)
-        print(f"USD file found at: {usdOutputPath}")
+    scene_dir = os.path.dirname(scene_path)
+    usd_output_path = os.path.abspath(os.path.join(scene_dir, f"{name}.usda"))
+    if os.path.isfile(usd_output_path) == True:
+        stage = Usd.Stage.Open(usd_output_path)
+        print(f"USD file found at: {usd_output_path}")
     else:
-        stage = Usd.Stage.CreateNew(usdOutputPath)
-        print(f"USD file created at: {usdOutputPath}")
+        stage = Usd.Stage.CreateNew(usd_output_path)
+        print(f"USD file created at: {usd_output_path}")
+
+    scene_names = [{
+
+        "WorldName": name,
+        "FilePath": usd_output_path
+        }]
+    scene_data.append(scene_names[0])
+    
     return stage 
     
-def checkXform(xform, transType):
+def check_xform(xform, trans_type) -> UsdGeom.XformOp:
     for op in xform.GetOrderedXformOps():
-        if op.GetOpType() == transType:
+        if op.GetOpType() == trans_type:
             return op
-    return xform.AddXformOp(transType)
+    return xform.AddXformOp(trans_type)
         
-def setXform(obj,xform):
+def set_xform(obj: str, xform: UsdGeom.Xform) -> None:
 
     cmds.currentTime(1, edit= True)
 
-    t_xform = checkXform(xform,UsdGeom.XformOp.TypeTranslate)
-    r_xform = checkXform(xform,UsdGeom.XformOp.TypeRotateXYZ)
-    s_xform = checkXform(xform,UsdGeom.XformOp.TypeScale)
+    t_xform = check_xform(xform,UsdGeom.XformOp.TypeTranslate)
+    r_xform = check_xform(xform,UsdGeom.XformOp.TypeRotateXYZ)
+    s_xform = check_xform(xform,UsdGeom.XformOp.TypeScale)
 
     if cmds.keyframe(obj,q =True,kc =True)>1:
-        for frame in range(int(startFrame), int(endFrame) + 1):
+        for frame in range(int(start_frame), int(end_frame) + 1):
             cmds.currentTime(frame, edit= True)
             time = Usd.TimeCode(frame)
             pos = cmds.xform(obj, query=True, ws=True, t=True)
@@ -76,7 +91,7 @@ def setXform(obj,xform):
 
 
 
-def writeMesh(obj,stage,path):
+def write_mesh(obj: str, stage: Usd.Stage, path: str) -> None:
     
     select = om.MSelectionList()
     select.add(obj)
@@ -96,10 +111,10 @@ def writeMesh(obj,stage,path):
     
     xform = UsdGeom.Xform(stage.GetPrimAtPath(path))
 
-    setXform(obj,xform)
+    set_xform(obj,xform)
 
     
-def writeCam(obj, stage,path):
+def write_cam(obj: str, stage: Usd.Stage, path: str) -> None:
     
     usdCam = UsdGeom.Camera.Define(stage, f"{path}")
     
@@ -109,9 +124,13 @@ def writeCam(obj, stage,path):
     horiAperture = cmds.getAttr(f"{shape}.horizontalFilmAperture")
     vertAperture = cmds.getAttr(f"{shape}.verticalFilmAperture")    
 
+    horiAperture = (horiAperture*25.4)*0.01
+    vertAperture = (vertAperture*25.4)*0.01
+    focalLength = focalLength*0.01
+
     xform = UsdGeom.Xform(stage.GetPrimAtPath(path))
     
-    setXform(obj,xform)
+    set_xform(obj,xform)
     
     usdCam.GetFocalLengthAttr().Set(focalLength)
     
@@ -120,7 +139,7 @@ def writeCam(obj, stage,path):
     
     
     
-def WriteRig(obj,stage):
+def write_rig(obj: str, stage: Usd.Stage) -> None:
     
     skelRootPath = cmds.ls(obj,sn=True)
     SkelRoot = UsdSkel.Root.Define(stage,f"/World/{skelRootPath[0]}")
@@ -162,7 +181,7 @@ def WriteRig(obj,stage):
             bindPoseMat4.append(Gf.Matrix4d()) # some of them were none so they're getting an identity matrix
         restPoseMat4.append(Gf.Matrix4d(restPose[0],restPose[1],restPose[2],restPose[3],restPose[4],restPose[5],restPose[6],restPose[7],restPose[8],restPose[9],restPose[10],restPose[11],restPose[12],restPose[13],restPose[14],restPose[15]))
 
-    for frame in range(int(startFrame), int(endFrame) + 1):
+    for frame in range(int(start_frame), int(end_frame) + 1):
 
         cmds.currentTime(frame, edit= True)
         frameQuats = []
@@ -261,29 +280,34 @@ def WriteRig(obj,stage):
         meshBinding.CreateSkeletonRel().SetTargets([skelPath])
 
 
-def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, endFrame, frameTimeCode):   
+def execute_export(
+    name: str,
+    unreal_project: str,
+    use_selected: bool,
+    start_frame: float,
+    end_frame: float,
+    frame_time_code: float
+) -> None:   
                 
-    stage = CreateUSDA(name)
+    stage = create_usda(name)
 
     worldPrim = stage.DefinePrim("/World", "Xform")
 
-    stage.SetStartTimeCode(int(startFrame))
-    stage.SetEndTimeCode(int(endFrame))
-    stage.SetTimeCodesPerSecond(int(frameTimeCode))
+    os.makedirs(os.path.dirname(json_file), exist_ok=True)
+    open(json_file, 'w').close()
+
+    stage.SetStartTimeCode(int(start_frame))
+    stage.SetEndTimeCode(int(end_frame))
+    stage.SetTimeCodesPerSecond(int(frame_time_code))
     UsdGeom.SetStageMetersPerUnit(stage,1.0)
     
-    if useSelected == True:
-        objList = SelectCurrent()
+    if use_selected == True:
+        objList = select_current()
 
-    if useSelected == False:
-        objList = SelectAllButCameras()
+    if use_selected == False:
+        objList = select_all_but_cameras()
 
-    json_file = (os.path.abspath(os.getcwd()) + r"\Temp\Usd_info.json")
-    os.makedirs(os.path.dirname(json_file), exist_ok=True)
-    
-    open(json_file, 'w').close()
-    json_data = []
-
+    export_data = []
 
     for obj in objList:
 
@@ -291,37 +315,38 @@ def ExecuteExport(name: str, unrealProject: str,useSelected: bool, startFrame, e
             print("mesh")
             usdMeshPath = "/World/" + obj.replace("|","/").strip("/")
             objName = obj.replace("|","")            
-            writeMesh(obj,stage,usdMeshPath)
+            write_mesh(obj,stage,usdMeshPath)
             mesh_data = {
                 "usd_path": usdMeshPath,
                 "asset_name": objName,
                 "asset_type":"Mesh"
             }
-            json_data.append(mesh_data)
+            export_data.append(mesh_data)
         elif cmds.listRelatives(obj, s=True, typ="camera"):  
             print("Camera")  
             usdCamPath = "/World/" + obj.replace("|","/").strip("/")
             objName = obj.replace("|","")
-            writeCam(obj,stage,usdCamPath)
+            write_cam(obj,stage,usdCamPath)
             cam_data = {
                 "usd_path": usdCamPath,
                 "asset_name": objName,
                 "asset_type": "Camera"
             }
-            json_data.append(cam_data)
+            export_data.append(cam_data)
 
         elif cmds.listRelatives(obj,ad=True,type='joint'): 
             print("Joints")
-            WriteRig(obj,stage)
+            write_rig(obj,stage)
     
     data = {
-        "Exported_Data": json_data
+        "Exported_Data": export_data,
+        "Scene_Data": scene_data
     }
     with open(json_file,"a") as f:
         json.dump((data),f, indent=4) 
     stage.GetRootLayer().Save()
 
-    print(f"Sent to Unreal project: {unrealProject}")
+    print(f"Sent to Unreal project: {unreal_project}")
 
 
 
