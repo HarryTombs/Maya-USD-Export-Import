@@ -64,35 +64,4 @@ usd_asset_cache.add_asset_reference(actor,actor)
 usd_asset_cache.refresh_storage()
 unreal.EditorAssetLibrary.save_loaded_asset(usd_asset_cache)
 
-
-# camera = (find_actor_recursive(actor,unreal.CameraActor))[0]
-
-
-# for info in data["Exported_Data"]:
-#     if info['asset_type'] == "Camera":
-#         cam_path = info["usd_path"]
-
-# unreal.log(f"Actors are{camera}")
-
-# stage = Usd.Stage.Open(usd_file_path)
-
-
-# focal_length = None
-# sensor_width = None
-# sensor_height = None
-
-# if cam_path != None:
-#     usd_camera: UsdGeom.Camera = UsdGeom.Camera.Get(stage, Sdf.Path(cam_path))
-#     focal_length = usd_camera.GetFocalLengthAttr().Get()
-#     sensor_width = usd_camera.GetHorizontalApertureAttr().Get()
-#     sensor_height = usd_camera.GetVerticalApertureAttr().Get()
-    
-
-# if camera.get_class().get_name() == "CineCameraActor":
-#     camera_component = camera.get_cine_camera_component()
-#     print("Camera component:", camera_component)
-# else:
-#     unreal.log_warning(f"Actor is not a CineCameraActor: {camera.get_class().get_name()}")
-
-
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
