@@ -20,6 +20,9 @@ Scriptpath = Scriptpath.replace("\\","/")
 powershellScript = str(Path(Projpath) / "unrealRun.ps1")
 
 def launchUnreal(unrealProject: str):
+    """
+    Launches Unreal Editor with the specified project and runs the import script.
+    """
     subprocess.run([
         "powershell",
         "-File", powershellScript,

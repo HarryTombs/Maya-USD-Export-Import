@@ -21,12 +21,19 @@ Path(json_file).write_text("")
 
 
 def select_all_but_cameras() -> list:
+    """
+    Returns a list of all top-level objects in the scene except default cameras.
+    """
     exclude = {"|front","|persp","|side","|top"}
     selected = cmds.ls(assemblies=True, l=True)
     return [obj for obj in selected if obj not in exclude]
     #thanks Jon
 
 def select_current() -> list:
+    """
+    Returns the currently selected objects in the scene.
+    Exits if nothing is selected.
+    """
     selected_name = cmds.ls(l=True, sl=True)
     if not selected_name:
         open(json_file, 'w').close()
@@ -34,6 +41,9 @@ def select_current() -> list:
     return selected_name
 
 def create_usda(name: str) -> Usd.Stage:
+    """
+    Creates or opens a .usda for the scene and returns the stage.
+    """
     scene_data.clear()
     scene_path = cmds.file(query=True, sceneName=True)
     if not scene_path:
@@ -58,12 +68,18 @@ def create_usda(name: str) -> Usd.Stage:
     return stage 
     
 def check_xform(xform, trans_type) -> UsdGeom.XformOp:
+    """
+    Checks if a specific transform operation exists on the xform, adds it if not, and returns it.
+    """
     for op in xform.GetOrderedXformOps():
         if op.GetOpType() == trans_type:
             return op
     return xform.AddXformOp(trans_type)
         
 def set_xform(obj: str, xform: UsdGeom.Xform) -> None:
+    """
+    Sets the transform (translate, rotate, scale) for the given object on the USD xform, including animation if present.
+    """
 
     cmds.currentTime(1, edit= True)
 
@@ -94,6 +110,9 @@ def set_xform(obj: str, xform: UsdGeom.Xform) -> None:
 
 
 def write_mesh(obj: str, stage: Usd.Stage, path: str) -> None:
+    """
+    Writes mesh data from the Maya object to the USD stage at the specified path.
+    """
     
     select = om.MSelectionList()
     select.add(obj)
@@ -117,6 +136,9 @@ def write_mesh(obj: str, stage: Usd.Stage, path: str) -> None:
 
     
 def write_cam(obj: str, stage: Usd.Stage, path: str) -> None:
+    """
+    Writes camera data from the Maya object to the USD stage at the specified path.
+    """
     
     usdCam = UsdGeom.Camera.Define(stage, f"{path}")
     
@@ -148,6 +170,9 @@ def execute_export(
     end_frame: float,
     frame_time_code: float
 ) -> None:   
+    """
+    Main export function. Exports selected or all objects to USD and writes export info to JSON.
+    """
                 
     stage = create_usda(name)
 

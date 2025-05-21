@@ -7,6 +7,9 @@ import shutil
 
 
 def install():
+    """
+    Installs the plugin by copying source files to Maya's plug-ins directory and updating sys.path.
+    """
     shelves_dir = cmds.internalVar(userShelfDir=True)
     base_dir = Path(shelves_dir).parents[1]
     plugins_dir = base_dir / 'plug-ins'
@@ -33,6 +36,9 @@ def install():
         print(f"added {dest_str} to sys.path")
 
 def add_shelf_button():
+    """
+    Adds a shelf button in Maya to run the plugin script.
+    """
 
     shelf_name = "UsdPlugin"
 
@@ -75,6 +81,9 @@ def add_shelf_button():
 
 
 def onMayaDroppedPythonFile(*args):
+    """
+    Entry point when the file is drag-and-dropped into Maya. Installs the plugin and adds the shelf button.
+    """
     
     install()
     print("Plugin Installed")

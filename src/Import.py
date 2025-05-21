@@ -1,8 +1,7 @@
+
 import unreal
-import math
 import json
 import os
-from pxr import Usd, UsdGeom, Sdf
 
 
 proj_path = os.path.dirname(__file__)
