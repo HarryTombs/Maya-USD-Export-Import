@@ -1,5 +1,36 @@
-## Unreal animation pipeline
+# Unreal animation Exporter
 
+This is a tool for extracting data from maya scenes using USD and injecting it directly to a specified Unreal project file, in the hypothetical scenario where they remove the "Export" button. Intended for use with maya 2024+ and Unreal Engine 5.4+ on Windows.
+
+![Image](https://github.com/user-attachments/assets/cd00fa90-0502-4c5a-a65c-73c952b4f5be)
+
+It detects and extracts keyframe information transfering them into USD, as well as other information like position data, start and end frames and camera focal length, being converted to fit the scale and limits of an unreal project. The goal is to have objects feel the same scale between programs as seamlessly as possible.
+
+It was originally planned to include rigged and animated characters but due to my lack of knowledge and experience in that area it became more of a holdup to finishing the pipeline as a whole, therefore was dropped.
+
+## How to install
+
+At a minimum you'll require the entire "/src" folder and the "drag_drop_install.py" file to install.
+
+Ensure you have the mayaUSDPlugin in Maya enabled.
+
+![Image](https://github.com/user-attachments/assets/eb37d216-2665-489d-a258-fa0d72cf980d)
+
+As well as the USD Importer, Pyhton Editor Script and Sequencer Scripting plugins in Unreal enabled.
+
+![Image](https://github.com/user-attachments/assets/3792e064-bce0-4274-951c-3365e17d7985)
+![Image](https://github.com/user-attachments/assets/b29b8b8d-bd85-4d99-92b7-86464522baea)
+![Image](https://github.com/user-attachments/assets/ed28b433-4f72-4813-b6c5-a0d3d4ee8994)
+
+In a saved Maya Scene, drag and drop the "drag_drop_install.py" file anywhere on mayas interface.
+
+
+A shelf called USD importer should appear with a single button with prompts to export from there.
+
+![image](https://github.com/user-attachments/assets/2cce6104-921e-45bc-9748-6eb669b75661)
+
+
+## Sources
 
 20tab (2016). UnrealEnginePython/tutorials/YourFirstAutomatedPipeline.md at master · 20tab/UnrealEnginePython. [online] GitHub. Available at: https://github.com/20tab/UnrealEnginePython/blob/master/tutorials/YourFirstAutomatedPipeline.md [Accessed 21 May 2025].
 
