@@ -32,6 +32,8 @@ A shelf called USD importer should appear with a single button with prompts to e
 
 ## Sources
 
+ChatGPT (2025). Used Throughout for debugging, document explaination and small tasks (type hints, formating, etc) [online]. Available at: https://chatgpt.com/.
+
 20tab (2016). UnrealEnginePython/tutorials/YourFirstAutomatedPipeline.md at master · 20tab/UnrealEnginePython. [online] GitHub. Available at: https://github.com/20tab/UnrealEnginePython/blob/master/tutorials/YourFirstAutomatedPipeline.md [Accessed 21 May 2025].
 
 Autodesk (2025). Python Commands. [online] Autodesk.com. Available at: https://help.autodesk.com/view/MAYAUL/2024/ENU/?guid=__CommandsPython_index_html [Accessed 21 May 2025].

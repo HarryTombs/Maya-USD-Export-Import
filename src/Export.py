@@ -1,11 +1,9 @@
 from pathlib import Path
 import os 
-import sys
 import json
-import tempfile
 import maya.cmds as cmds
 import maya.api.OpenMaya as om
-from pxr import Usd, UsdGeom, Gf, Vt, Sdf, UsdSkel
+from pxr import Usd, UsdGeom, Gf
 
 
 start_frame = cmds.playbackOptions(q=True, min=True)
